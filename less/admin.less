@@ -1,0 +1,92 @@
+/*
+ * 🚨 --scribe-* names only; never redefine a core variable at :root.
+ */
+.ScribeToolbarBuilder {
+  --scribe-line: color-mix(in srgb, var(--text-color, #222) 16%, transparent);
+  --scribe-fill: color-mix(in srgb, var(--text-color, #222) 5%, transparent);
+}
+
+.ScribeBuilder-toolbar,
+.ScribeBuilder-palette {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 10px;
+  margin-top: 6px;
+  border: 1px dashed var(--scribe-line);
+  border-radius: 8px;
+  min-height: 56px;
+  align-content: flex-start;
+}
+
+.ScribeBuilder-toolbar {
+  /* The live toolbar is the thing being built, so it reads as a solid surface
+     while the palette below stays a source to pull from. */
+  border-style: solid;
+  background: var(--scribe-fill);
+
+  &.is-dropTarget {
+    border-color: var(--primary-color, #4d698e);
+  }
+}
+
+.ScribeBuilder-paletteLabel {
+  display: block;
+  margin-top: 18px;
+}
+
+.ScribeBuilder-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border: 1px solid var(--scribe-line);
+  border-radius: 999px;
+  background: var(--body-bg, #fff);
+  font-size: 13px;
+  cursor: grab;
+  user-select: none;
+
+  &:focus-visible {
+    outline: 2px solid var(--primary-color, #4d698e);
+    outline-offset: 2px;
+  }
+
+  &.is-dragging {
+    opacity: 0.4;
+    cursor: grabbing;
+  }
+
+  /* Where the chip will land, shown on the chip it will land before. */
+  &.is-dropBefore {
+    box-shadow: -3px 0 0 var(--primary-color, #4d698e);
+  }
+
+  i {
+    width: 14px;
+    text-align: center;
+    position: relative;
+
+    &[data-badge]::after {
+      content: attr(data-badge);
+      position: absolute;
+      right: -4px;
+      bottom: -2px;
+      font-size: 8px;
+      font-weight: 700;
+      font-family: var(--body-font, sans-serif);
+    }
+  }
+}
+
+.ScribeBuilder-empty {
+  color: var(--muted-color, #777);
+  font-style: italic;
+  padding: 6px 2px;
+}
+
+.ScribeBuilder-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 14px;
+}
