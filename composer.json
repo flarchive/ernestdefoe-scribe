@@ -1,0 +1,56 @@
+{
+    "name": "ernestdefoe/scribe",
+    "description": "Scribe \u2014 a true WYSIWYG editor for Flarum. TipTap, with no Markdown anywhere in the stack.",
+    "keywords": [
+        "flarum",
+        "wysiwyg",
+        "editor",
+        "tiptap"
+    ],
+    "type": "flarum-extension",
+    "license": "MIT",
+    "require": {
+        "php": "^8.2",
+        "flarum/core": "^2.0"
+    },
+    "require-dev": {
+        "flarum/phpstan": "^2.0"
+    },
+    "authors": [
+        {
+            "name": "Ernest Defoe",
+            "email": "ernestdefoe@ernestdefoe.online"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "ErnestDefoe\\Scribe\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "ErnestDefoe\\Scribe\\Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "flarum-extension": {
+            "title": "Scribe",
+            "category": "feature",
+            "icon": {
+                "name": "fas fa-pen-nib",
+                "backgroundColor": "#2b3a55",
+                "color": "#fff"
+            }
+        }
+    },
+    "conflict": {
+        "fof/rich-text": "*"
+    },
+    "minimum-stability": "beta",
+    "prefer-stable": true,
+    "support": {
+        "issues": "https://github.com/ernestdefoe/scribe/issues",
+        "source": "https://github.com/ernestdefoe/scribe",
+        "forum": "https://ernestdefoe.online/t/scribe"
+    }
+}
