@@ -1,0 +1,555 @@
+/*
+ * 🚨 Never redefine a core CSS variable at :root. An extension that aliased
+ * --text-color to a theme-only variable made every core `color: var(--text-color)`
+ * invalid at computed-value time, so whole menus rendered white-on-white on
+ * stock Flarum. Everything here is a --scribe-* name of its own, resolved
+ * against core variables with real fallbacks.
+ */
+.Scribe-toolbarMount {
+  --scribe-line: color-mix(in srgb, var(--text-color, #222) 14%, transparent);
+  --scribe-muted: var(--muted-color, #777);
+}
+
+.Scribe-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px;
+  /* Flush left, so the icons line up with the title above and the text below. */
+  padding: 6px 0;
+  margin-bottom: 2px;
+  border-bottom: 1px solid var(--scribe-line);
+}
+
+.Scribe-toolbarButton {
+  &.Button--icon {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+  }
+
+  /*
+   * The pressed state has to survive both themes. A flat light grey is
+   * invisible on a dark forum, so the fill is mixed from the text colour —
+   * which darkens a light surface and lightens a dark one.
+   */
+  &.is-active {
+    background: color-mix(in srgb, var(--text-color, #222) 12%, transparent);
+    color: var(--text-color, #222);
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: default;
+  }
+}
+
+/* The heading level, drawn on the shared heading glyph. */
+.Scribe-toolbarButton[data-badge] {
+  position: relative;
+
+  &::after {
+    content: attr(data-badge);
+    position: absolute;
+    right: 3px;
+    bottom: 3px;
+    font-size: 9px;
+    font-weight: 700;
+    line-height: 1;
+    pointer-events: none;
+  }
+}
+
+.Scribe-prompt {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--scribe-line, rgba(0, 0, 0, 0.14));
+}
+
+.Scribe-prompt--menu {
+  flex-wrap: wrap;
+}
+
+.Scribe-promptInput {
+  /* Takes the room it needs; the Apply button keeps its natural width. */
+  flex: 1;
+  min-width: 0;
+}
+
+.Scribe-promptEmoji {
+  flex: 0 0 44px;
+  text-align: center;
+}
+
+.Scribe-promptNumber {
+  flex: 0 0 56px;
+  text-align: center;
+}
+
+/* The native OS/browser colour picker, next to the free-form hex text field
+   it stays in sync with — see ScribeToolbar.tsx's `toPickerHex`. */
+.Scribe-colorPicker {
+  flex: 0 0 28px;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid var(--scribe-line, rgba(0, 0, 0, 0.15));
+  border-radius: 4px;
+  cursor: pointer;
+  background: none;
+
+  &::-webkit-color-swatch-wrapper { padding: 2px; }
+  &::-webkit-color-swatch { border: none; border-radius: 2px; }
+}
+
+.Scribe-colorField {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: 1;
+  min-width: 0;
+}
+
+.Scribe-swatch {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  padding: 0;
+  cursor: pointer;
+
+  &:focus-visible {
+    outline: 2px solid var(--primary-color, #4d698e);
+    outline-offset: 2px;
+  }
+}
+
+.Scribe-editor {
+  /*
+   * 🚨 The editable must fill this box, never exceed it.
+   *
+   * Flarum sizes the composer itself (`Composer-flexible` lands on this
+   * element) and expects its child to fit. Giving the editable a fixed
+   * `min-height` instead made it taller than its own container, so in a
+   * normal-height composer the text area overflowed and sat on top of the
+   * "Post Discussion" button. `flex: 1` + `min-height: 0` lets it take the
+   * space it is given and scroll inside it.
+   *
+   * 🚨 And this element must claim its own share as a flex ITEM, not only act
+   * as a flex container.
+   *
+   * It declared `display: flex` for its child and then said nothing about its
+   * own behaviour, so it defaulted to `flex: 0 1 auto` — height from content.
+   * Its only child is `flex: 1; min-height: 0`, which contributes ZERO to
+   * min-content. Content height of nearly nothing, so the whole editor
+   * collapsed to a sliver. Desktop never showed it because Flarum hands this
+   * element a definite height there; the full-screen mobile composer does not,
+   * and a user reported an editing box "so narrow it's almost as if it doesn't
+   * exist" while his text was still in it.
+   */
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+
+  .ProseMirror {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    /*
+     * No left padding: the title input, the toolbar and the body text all sit
+     * against the same edge. Insetting only the body left three different left
+     * margins stacked down the composer.
+     */
+    padding: 10px 0;
+    outline: none;
+
+    > * + * { margin-top: 0.65em; }
+
+    /* Flarum styles posts, not the composer, so the editable has to carry its
+       own rendering of everything Scribe can produce. */
+    h2 { font-size: 1.4em; }
+    h3 { font-size: 1.2em; }
+
+    blockquote {
+      border-left: 3px solid var(--scribe-line, rgba(0, 0, 0, 0.15));
+      padding-left: 12px;
+      color: var(--muted-color, #777);
+    }
+
+    code {
+      font-family: monospace;
+      background: color-mix(in srgb, var(--text-color, #222) 8%, transparent);
+      padding: 1px 4px;
+      border-radius: 3px;
+    }
+
+    pre {
+      background: color-mix(in srgb, var(--text-color, #222) 8%, transparent);
+      padding: 10px 12px;
+      border-radius: 6px;
+      overflow-x: auto;
+
+      code { background: none; padding: 0; }
+    }
+
+    img { max-width: 100%; height: auto; }
+
+    /*
+     * 🚨 Without this, clicking an image DOES select it — ProseMirror adds
+     * `.ProseMirror-selectednode` to the DOM node the moment it becomes a
+     * NodeSelection — but nothing on screen shows it, so from the user's
+     * side it looks exactly like the click did nothing. This is why the
+     * align buttons on a freshly-inserted, not-yet-wrapped image "didn't
+     * work": the selection existed, there was just no visible feedback that
+     * it had happened, so nothing suggested clicking Align a second time
+     * (after seeing no reaction) was worth trying at all.
+     */
+    .ProseMirror-selectednode {
+      outline: 3px solid var(--primary-color, #3b82f6);
+      outline-offset: 1px;
+      border-radius: 4px;
+    }
+
+    /*
+     * 🚨 Same story as `.ProseMirror-selectednode` above. TipTap's built-in
+     * resize (Image.configure({ resize: {...} })) only ever sets a handle's
+     * *position* (`top/right/bottom/left: 0`) — zero width, height, or
+     * background — so with no CSS at all the corner-drag targets exist and
+     * are grabbable in theory, but there's nothing on screen to see or aim
+     * a cursor at.
+     */
+    [data-resize-handle] {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      background: var(--primary-color, #3b82f6);
+      border: 2px solid #fff;
+      border-radius: 50%;
+      z-index: 5;
+    }
+    [data-resize-handle="top-left"],
+    [data-resize-handle="bottom-right"] { cursor: nwse-resize; }
+    [data-resize-handle="top-right"],
+    [data-resize-handle="bottom-left"] { cursor: nesw-resize; }
+
+    /* The align wrapper — see ScribeImageAlign's comment in extensions.ts
+       for why alignment lives on a <figure> around the image, not on the
+       <img> itself. */
+    .Scribe-imgAlign {
+      // `width: fit-content` so the figure hugs the image's own size —
+      // `margin: auto` on a full-width block does nothing to visually move it.
+      width: fit-content;
+      max-width: 100%;
+      margin: 0;
+
+      &[data-align="left"]    { margin-right: auto; }
+      &[data-align="center"],
+      &[data-align="justify"] { margin-left: auto; margin-right: auto; }
+      &[data-align="right"]   { margin-left: auto; }
+    }
+
+    /* Mirrors Vocabulary::TEMPLATES' P/H1-H6 `@align` → `text-align` — the
+       editor has no server-rendered style to inherit, so it needs its own copy. */
+    [data-align="left"]    { text-align: left; }
+    [data-align="center"]  { text-align: center; }
+    [data-align="right"]   { text-align: right; }
+    [data-align="justify"] { text-align: justify; }
+
+    /* The server adds the real <summary>/title bar at render time (see
+       Vocabulary::EXTRA_TEMPLATES['SPOILER']) — the editor only needs to show
+       *something* is there, via the title text and a muted body. */
+    .Scribe-spoiler {
+      border: 1px solid var(--scribe-line, rgba(0, 0, 0, 0.15));
+      border-radius: 6px;
+      padding: 8px 10px;
+      background: color-mix(in srgb, var(--text-color, #222) 4%, transparent);
+
+      &::before {
+        content: attr(data-title);
+        display: block;
+        font-weight: 600;
+        margin-bottom: 6px;
+        color: var(--scribe-muted, #777);
+      }
+
+      &:not([data-title])::before { content: '(untitled spoiler)'; }
+    }
+
+    .Scribe-info {
+      border-radius: 6px;
+      padding: 10px 12px;
+      border: 1px solid var(--scribe-line, rgba(0, 0, 0, 0.15));
+
+      &::before {
+        content: attr(data-title);
+        display: block;
+        font-weight: 700;
+      }
+
+      &:not([data-title])::before { display: none; }
+    }
+
+    /* Composing always sees the real content — ReplyGate::class lets the
+       author see their own post unconditionally. This border is just a
+       reminder that the block is gated for everyone else. */
+    .Scribe-replyGate {
+      border: 1px dashed var(--scribe-line, rgba(0, 0, 0, 0.25));
+      border-radius: 6px;
+      padding: 8px 10px;
+
+      &::before {
+        content: '🔒 only visible to members who have replied';
+        display: block;
+        font-size: 0.85em;
+        font-weight: 600;
+        margin-bottom: 6px;
+        color: var(--scribe-muted, #777);
+      }
+    }
+
+    hr {
+      border: 0;
+      border-top: 1px solid var(--scribe-line, rgba(0, 0, 0, 0.15));
+    }
+
+    /* A wide table scrolls inside the editor; the composer must not grow a
+       horizontal scrollbar of its own. */
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      table-layout: fixed;
+
+      td, th {
+        border: 1px solid var(--scribe-line, rgba(0, 0, 0, 0.15));
+        padding: 5px 8px;
+        vertical-align: middle;
+        /* Without this a long word in one cell widens the whole table. */
+        min-width: 0;
+        word-break: break-word;
+
+        /* The browser's own default <p> margin (~1em) still applies inside
+           a cell — `vertical-align: middle` centres that whole margin box,
+           not the text, so the text itself sits off-centre. */
+        p { margin: 0; }
+      }
+
+      th {
+        font-weight: 600;
+        background: color-mix(in srgb, var(--text-color, #222) 6%, transparent);
+      }
+
+      /* Cells need room to be a drop target, and a column can't be
+         narrower than its own handle plus a little breathing room. */
+      td, th { position: relative; min-width: 24px; }
+    }
+
+    /*
+     * 🚨 `@tiptap/extension-table`'s own column-resize plugin (from
+     * prosemirror-tables, via `Table.configure({ resizable: true })`) — no
+     * visual cue was ever added for it, so the drag worked but nothing on
+     * screen showed a column even *could* be resized. Class names
+     * (`.column-resize-handle`, `.resize-cursor`) are the plugin's own,
+     * not ours to rename.
+     */
+    .column-resize-handle {
+      position: absolute;
+      right: -2px;
+      top: 0;
+      bottom: -2px;
+      width: 4px;
+      background: var(--primary-color, #3b82f6);
+      pointer-events: none;
+      z-index: 20;
+    }
+    &.resize-cursor { cursor: col-resize; }
+
+    /* The placeholder is a pseudo-element on the first empty paragraph, so it
+       must not be selectable or read as content. */
+    p.is-editor-empty:first-child::before {
+      content: attr(data-placeholder);
+      color: var(--scribe-muted, #777);
+      float: left;
+      height: 0;
+      pointer-events: none;
+    }
+
+    /*
+     * 🚨 A genuinely empty <p></p> — a deliberate blank line — collapses to
+     * ~0 height without this, so hitting Enter twice looked like it did
+     * nothing (users worked around it with an empty `:nothing:` emoji
+     * image, which is what this fix replaces).
+     */
+    p:empty { min-height: 1em; }
+  }
+}
+
+/* Rendered posts: same fix as the editor's own copy above — a genuinely
+   empty <p></p> (a deliberate blank line) needs a forced height or it
+   collapses to nothing. */
+.Post-body p:empty { min-height: 1em; }
+
+/*
+ * Rendered posts: the table wrapper the server emits. "Chip grid" look —
+ * every cell is its own rounded box with a small gap to its neighbours
+ * (`border-spacing`, not `border-collapse`), matching magicbb's old table
+ * style now that its CSS is gone along with the extension. No zebra
+ * striping: every body cell is the same flat colour.
+ */
+.Scribe-tableWrap {
+  overflow-x: auto;
+  overflow-y: hidden;
+  max-width: 100%;
+  margin: 0.65em 0;
+
+  table {
+    border-collapse: separate;
+    border-spacing: 3px;
+    width: 100%;
+  }
+
+  th, td {
+    padding: 10px 16px;
+    text-align: left;
+    vertical-align: middle;
+    border-radius: 6px;
+
+    p { margin: 0; }
+  }
+
+  /*
+   * 🚨 Scoped to `thead th`, not `th`. Old Markdown/BBCode-era tables (pre-
+   * Scribe) put a <TH> in every row's first cell as a row label, with no
+   * <thead> at all — a blanket `th { blue }` rule turned that whole column
+   * into one solid block. `thead th` only ever matches a real top header
+   * row, so a row-label table keeps its td styling for those cells (below).
+   */
+  thead th {
+    font-weight: 700;
+    color: #fff;
+    background: var(--primary-color, #3b82f6);
+    text-align: center;
+    white-space: nowrap;
+    // Redundant with the `th, td` rule above, but explicit — a cell that's
+    // its own separated box (border-spacing, not border-collapse) has no
+    // shared edge with its neighbours, so every corner rounds the same way.
+    border-radius: 6px;
+  }
+
+  /*
+   * 🚨 Cell fills are derived from the TEXT colour, never hardcoded.
+   *
+   * These were both #e4eaf7 — a light blue-grey with no dark variant. The text
+   * colour follows the theme, so on any dark forum the result was near-white
+   * text on a near-white cell: rgb(243,246,249) on rgb(228,234,247), a contrast
+   * ratio of about 1.06:1. Not "hard to read" — invisible. Every Scribe site in
+   * dark mode had it, in every table ever posted.
+   *
+   * Mixing the text colour into the background gives a tint that inverts with
+   * the theme for free: a light wash on a light forum, a subtle lift on a dark
+   * one, and it tracks a custom text colour too. This is the same construction
+   * the editor's own table rule already used — the rendered-post copy simply
+   * never got it.
+   *
+   * The rgba line underneath is the fallback for browsers without color-mix;
+   * a neutral grey at low alpha reads correctly on either ground.
+   */
+  /* A <th> outside <thead> is a row label, not a column header — bold, not
+     a colour block, so it reads as part of the row instead of a banner. */
+  tbody th {
+    font-weight: 600;
+    white-space: nowrap;
+    background: rgba(128, 128, 128, 0.16);
+    background: color-mix(in srgb, var(--text-color, #222) 12%, transparent);
+  }
+
+  td {
+    background: rgba(128, 128, 128, 0.09);
+    background: color-mix(in srgb, var(--text-color, #222) 7%, transparent);
+  }
+}
+
+/* Rendered posts: an aligned image. Same rules as the editor's own copy above. */
+.Post-body .Scribe-imgAlign {
+  width: fit-content;
+  max-width: 100%;
+  margin: 0;
+
+  &[data-align="left"]    { margin-right: auto; }
+  &[data-align="center"],
+  &[data-align="justify"] { margin-left: auto; margin-right: auto; }
+  &[data-align="right"]   { margin-left: auto; }
+
+  img { max-width: 100%; height: auto; display: block; }
+}
+
+/* Rendered posts: spoiler + info blocks. Colour comes from the server's
+   inline style (Vocabulary::EXTRA_TEMPLATES['SPOILER']/['INFO']) — layout
+   lives here so a block with no colour set still looks intentional. */
+.Scribe-spoiler {
+  border: 1px solid var(--scribe-line, rgba(0, 0, 0, 0.15));
+  border-radius: 6px;
+  padding: 4px 10px;
+  margin: 0.65em 0;
+
+  summary {
+    cursor: pointer;
+    font-weight: 600;
+    padding: 6px 0;
+  }
+
+  .Scribe-spoilerBody { padding: 4px 0 8px; }
+}
+
+.Scribe-info {
+  border: 1px solid var(--scribe-line, rgba(0, 0, 0, 0.15));
+  border-radius: 6px;
+  padding: 10px 14px;
+  margin: 0.65em 0;
+
+  .Scribe-infoTitle { font-weight: 700; margin-bottom: 4px; }
+}
+
+/*
+ * Both the locked message and the real body are always in the HTML (see
+ * Vocabulary::EXTRA_TEMPLATES['SCRIBEREPLY']) — js/src/forum/replyGate.ts
+ * adds `.is-unlocked` client-side once it knows the viewer qualifies, and
+ * that's the only thing that decides which half is visible. Locked is the
+ * default so there's no flash of real content before JS has a chance to run.
+ */
+.Scribe-replyGateBody { display: none; }
+
+.Scribe-replyGateLocked {
+  border: 1px dashed var(--scribe-line, rgba(0, 0, 0, 0.25));
+  border-radius: 6px;
+  padding: 10px 14px;
+  margin: 0.65em 0;
+  color: var(--muted-color, #777);
+  font-style: italic;
+
+  &::before { content: '🔒 '; font-style: normal; }
+}
+
+.Scribe-replyGate.is-unlocked {
+  .Scribe-replyGateBody { display: block; }
+  .Scribe-replyGateLocked { display: none; }
+}
+
+
+/*
+ * 🚨 A floor on the full-screen mobile composer.
+ *
+ * Belt and braces for the collapse above: if anything ever hands this element
+ * a parent that is not a flex container, `flex: 1` does nothing and there is
+ * no height to inherit. On mobile the composer is full-screen, so a floor
+ * cannot overflow anything — which is not true on desktop, where a short
+ * composer plus a fixed minimum is exactly what once pushed the editable over
+ * the "Post Discussion" button. Hence mobile only.
+ */
+@media (max-width: 767px) {
+  .Scribe-editor {
+    min-height: 40vh;
+  }
+}
