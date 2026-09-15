@@ -1,0 +1,45 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  js:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20', cache: npm, cache-dependency-path: js/package-lock.json }
+
+      - run: npm ci
+        working-directory: js
+
+      - name: Types
+        run: npm run check-typings
+        working-directory: js
+
+      # 🚨 The translation other extensions insert through — a quoted post, a
+      # finished upload. Pure string handling, which is where silent wrongness
+      # lives: it had a customer-reported bug, and the fix for it had a bug of
+      # its own that only this caught.
+      - name: Unit tests
+        run: npm test
+        working-directory: js
+
+      - name: Build
+        run: npm run build
+        working-directory: js
+
+  php:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with: { php-version: '8.3', coverage: none }
+
+      - run: composer validate --strict
+
+      - name: Lint every PHP file
+        run: find src extend.php -name '*.php' -print0 | xargs -0 -n1 php -l
