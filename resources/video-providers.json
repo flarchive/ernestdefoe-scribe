@@ -1,0 +1,194 @@
+{
+  "_comment": [
+    "The one list of video providers Scribe can embed. Read by BOTH sides: PHP builds the stored tag's filters and the rendered facade from it (src/Formatter/VideoEmbed.php), and the editor and the forum's click-to-load handler build their URLs from it (js/src/common/video/). A provider added here is added everywhere; nothing else lists them.",
+    "Each entry is an embed KIND, not a company: a YouTube Short is vertical and a YouTube video is not, so they are two entries. The key is what is stored in a post (data-provider), so a key must never be renamed once released, or every post using it stops rendering.",
+    "id: the STRICT pattern for this provider's id. It is the security boundary: the server rejects a tag whose id fails it, so nothing outside it can reach an href, a src or an iframe.",
+    "match: how a pasted URL is recognised. hosts are exact (after lower-casing and dropping a leading www.), so youtube.com.evil.example and facebook.com@evil.example match nothing. path is matched against the URL path; the id comes from its (?<id>) group, or from the query parameter named in query.",
+    "embed / watch / thumbnail: built ONLY from the validated id (and start). {id}, {start} (seconds), {startHms} (1h2m3s) and, for embed only, {host} (the forum's own host, for Twitch's parent=) are the only placeholders. embedStart / watchStart are appended only when the post has a start time.",
+    "Never a provider whose embed needs a URL we cannot rebuild from the id. fb.watch, vm.tiktok.com and facebook.com/share/ links are redirects that need a request to resolve, Rumble's embed id is not in its public URL, Kick has no stable clip embed, and X/Twitter needs its widgets script: all of those stay ordinary links."
+  ],
+  "providers": {
+    "youtube": {
+      "name": "YouTube",
+      "icon": "fab fa-youtube",
+      "aspect": "16:9",
+      "id": "[A-Za-z0-9_-]{11}",
+      "embed": "https://www.youtube-nocookie.com/embed/{id}?autoplay=1&rel=0",
+      "embedStart": "&start={start}",
+      "watch": "https://www.youtube.com/watch?v={id}",
+      "watchStart": "&t={start}s",
+      "thumbnail": "https://i.ytimg.com/vi/{id}/hqdefault.jpg",
+      "match": [
+        { "hosts": ["youtube.com", "m.youtube.com", "music.youtube.com"], "path": "^/watch/?$", "query": "v" },
+        { "hosts": ["youtube.com", "m.youtube.com", "youtube-nocookie.com"], "path": "^/(?:embed|live|v)/(?<id>[A-Za-z0-9_-]{11})/?$" },
+        { "hosts": ["youtu.be"], "path": "^/(?<id>[A-Za-z0-9_-]{11})/?$" }
+      ]
+    },
+    "youtubeshorts": {
+      "name": "YouTube Shorts",
+      "brand": "YouTube",
+      "icon": "fab fa-youtube",
+      "aspect": "9:16",
+      "id": "[A-Za-z0-9_-]{11}",
+      "embed": "https://www.youtube-nocookie.com/embed/{id}?autoplay=1&rel=0",
+      "watch": "https://www.youtube.com/shorts/{id}",
+      "thumbnail": "https://i.ytimg.com/vi/{id}/hqdefault.jpg",
+      "match": [
+        { "hosts": ["youtube.com", "m.youtube.com"], "path": "^/shorts/(?<id>[A-Za-z0-9_-]{11})/?$" }
+      ]
+    },
+    "vimeo": {
+      "name": "Vimeo",
+      "icon": "fab fa-vimeo-v",
+      "aspect": "16:9",
+      "id": "[0-9]{1,12}",
+      "embed": "https://player.vimeo.com/video/{id}?dnt=1&autoplay=1",
+      "embedStart": "#t={start}s",
+      "watch": "https://vimeo.com/{id}",
+      "watchStart": "#t={start}s",
+      "match": [
+        { "hosts": ["vimeo.com"], "path": "^/(?:channels/[A-Za-z0-9_-]+/|groups/[A-Za-z0-9_-]+/videos/|showcase/[0-9]+/video/)?(?<id>[0-9]{1,12})/?$" },
+        { "hosts": ["player.vimeo.com"], "path": "^/video/(?<id>[0-9]{1,12})/?$" }
+      ]
+    },
+    "facebook": {
+      "name": "Facebook",
+      "icon": "fab fa-facebook",
+      "aspect": "16:9",
+      "id": "[0-9]{5,25}",
+      "embed": "https://www.facebook.com/plugins/video.php?href=https%3A%2F%2Fwww.facebook.com%2Fwatch%2F%3Fv%3D{id}&show_text=false&autoplay=true",
+      "watch": "https://www.facebook.com/watch/?v={id}",
+      "match": [
+        { "hosts": ["facebook.com", "m.facebook.com", "web.facebook.com"], "path": "^/(?:watch/?|video\\.php)$", "query": "v" },
+        { "hosts": ["facebook.com", "m.facebook.com", "web.facebook.com"], "path": "^/[A-Za-z0-9.-]+/videos/(?:[^/]+/)?(?<id>[0-9]{5,25})/?$" }
+      ]
+    },
+    "facebookreel": {
+      "name": "Facebook Reels",
+      "brand": "Facebook",
+      "icon": "fab fa-facebook",
+      "aspect": "9:16",
+      "id": "[0-9]{5,25}",
+      "embed": "https://www.facebook.com/plugins/video.php?href=https%3A%2F%2Fwww.facebook.com%2Freel%2F{id}&show_text=false&autoplay=true",
+      "watch": "https://www.facebook.com/reel/{id}",
+      "match": [
+        { "hosts": ["facebook.com", "m.facebook.com", "web.facebook.com"], "path": "^/reel/(?<id>[0-9]{5,25})/?$" }
+      ]
+    },
+    "espn": {
+      "name": "ESPN",
+      "icon": "fas fa-video",
+      "aspect": "16:9",
+      "id": "[0-9]{4,12}",
+      "embed": "https://www.espn.com/core/video/iframe/_/id/{id}/",
+      "watch": "https://www.espn.com/video/clip/_/id/{id}",
+      "match": [
+        { "hosts": ["espn.com", "espn.co.uk"], "path": "^/(?:video/clip|watch/player)/?$", "query": "id" },
+        { "hosts": ["espn.com", "espn.co.uk"], "path": "^/(?:core/)?video/(?:clip|iframe)/_/id/(?<id>[0-9]{4,12})(?:/[^/]*)?/?$" }
+      ]
+    },
+    "instagram": {
+      "name": "Instagram",
+      "icon": "fab fa-instagram",
+      "aspect": "4:5",
+      "id": "[A-Za-z0-9_-]{5,40}",
+      "embed": "https://www.instagram.com/p/{id}/embed",
+      "watch": "https://www.instagram.com/p/{id}/",
+      "match": [
+        { "hosts": ["instagram.com"], "path": "^/(?:[A-Za-z0-9._]+/)?(?:p|tv)/(?<id>[A-Za-z0-9_-]{5,40})(?:/embed)?/?$" }
+      ]
+    },
+    "instagramreel": {
+      "name": "Instagram Reels",
+      "brand": "Instagram",
+      "icon": "fab fa-instagram",
+      "aspect": "9:16",
+      "id": "[A-Za-z0-9_-]{5,40}",
+      "embed": "https://www.instagram.com/reel/{id}/embed",
+      "watch": "https://www.instagram.com/reel/{id}/",
+      "match": [
+        { "hosts": ["instagram.com"], "path": "^/(?:[A-Za-z0-9._]+/)?reels?/(?<id>[A-Za-z0-9_-]{5,40})(?:/embed)?/?$" }
+      ]
+    },
+    "tiktok": {
+      "name": "TikTok",
+      "icon": "fab fa-tiktok",
+      "aspect": "9:16",
+      "id": "[0-9]{15,25}",
+      "embed": "https://www.tiktok.com/embed/v2/{id}",
+      "watch": "https://m.tiktok.com/v/{id}.html",
+      "match": [
+        { "hosts": ["tiktok.com", "m.tiktok.com"], "path": "^/@[A-Za-z0-9._-]+/video/(?<id>[0-9]{15,25})/?$" },
+        { "hosts": ["tiktok.com", "m.tiktok.com"], "path": "^/v/(?<id>[0-9]{15,25})(?:\\.html)?/?$" },
+        { "hosts": ["tiktok.com"], "path": "^/embed(?:/v2)?/(?<id>[0-9]{15,25})/?$" }
+      ]
+    },
+    "twitchclip": {
+      "name": "Twitch clips",
+      "brand": "Twitch",
+      "icon": "fab fa-twitch",
+      "aspect": "16:9",
+      "id": "[A-Za-z0-9_-]{4,100}",
+      "embed": "https://clips.twitch.tv/embed?clip={id}&autoplay=true&parent={host}",
+      "watch": "https://clips.twitch.tv/{id}",
+      "match": [
+        { "hosts": ["clips.twitch.tv"], "path": "^/embed/?$", "query": "clip" },
+        { "hosts": ["clips.twitch.tv"], "path": "^/(?!embed/?$)(?<id>[A-Za-z0-9_-]{4,100})/?$" },
+        { "hosts": ["twitch.tv", "m.twitch.tv"], "path": "^/[A-Za-z0-9_]+/clip/(?<id>[A-Za-z0-9_-]{4,100})/?$" }
+      ]
+    },
+    "twitchvideo": {
+      "name": "Twitch videos",
+      "brand": "Twitch",
+      "icon": "fab fa-twitch",
+      "aspect": "16:9",
+      "id": "[0-9]{1,15}",
+      "embed": "https://player.twitch.tv/?video={id}&autoplay=true&parent={host}",
+      "embedStart": "&time={startHms}",
+      "watch": "https://www.twitch.tv/videos/{id}",
+      "watchStart": "?t={startHms}",
+      "match": [
+        { "hosts": ["twitch.tv", "m.twitch.tv"], "path": "^/videos/(?<id>[0-9]{1,15})/?$" }
+      ]
+    },
+    "streamable": {
+      "name": "Streamable",
+      "icon": "fas fa-film",
+      "aspect": "16:9",
+      "id": "[A-Za-z0-9]{3,12}",
+      "embed": "https://streamable.com/e/{id}?autoplay=1",
+      "watch": "https://streamable.com/{id}",
+      "match": [
+        { "hosts": ["streamable.com"], "path": "^/(?:[eos]/)?(?!(?:login|signup|upload|pricing|about|blog|terms|privacy|settings|documentation|clipper|e|o|s)/?$)(?<id>[A-Za-z0-9]{3,12})/?$" }
+      ]
+    },
+    "dailymotion": {
+      "name": "Dailymotion",
+      "icon": "fab fa-dailymotion",
+      "aspect": "16:9",
+      "id": "[A-Za-z0-9]{5,12}",
+      "embed": "https://www.dailymotion.com/embed/video/{id}?autoplay=1",
+      "embedStart": "&start={start}",
+      "watch": "https://www.dailymotion.com/video/{id}",
+      "watchStart": "?start={start}",
+      "thumbnail": "https://www.dailymotion.com/thumbnail/video/{id}",
+      "match": [
+        { "hosts": ["dailymotion.com"], "path": "^/(?:embed/)?video/(?<id>[A-Za-z0-9]{5,12})(?:_[^/]*)?/?$" },
+        { "hosts": ["dai.ly"], "path": "^/(?<id>[A-Za-z0-9]{5,12})/?$" }
+      ]
+    },
+    "loom": {
+      "name": "Loom",
+      "icon": "fas fa-video",
+      "aspect": "16:9",
+      "id": "[0-9a-f]{32}",
+      "embed": "https://www.loom.com/embed/{id}?autoplay=1",
+      "embedStart": "&t={start}",
+      "watch": "https://www.loom.com/share/{id}",
+      "watchStart": "?t={start}",
+      "match": [
+        { "hosts": ["loom.com"], "path": "^/(?:share|embed)/(?<id>[0-9a-f]{32})/?$" }
+      ]
+    }
+  }
+}
