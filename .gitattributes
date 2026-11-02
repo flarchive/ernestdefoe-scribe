@@ -1,0 +1,6 @@
+# Committed for CI (see .github/workflows/ci.yml), never shipped: a Composer
+# install downloads the GitHub archive, which leaves export-ignore paths out.
+/vendor export-ignore
+/js/node_modules export-ignore
+/screenshots export-ignore
+/.github export-ignore
